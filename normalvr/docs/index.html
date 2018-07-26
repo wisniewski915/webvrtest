@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=, initial-scale=1.0">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <title>Clique Conferencing Demo</title>
+        <meta name="description" content="Basic Example — Networked-Aframe">
+
+    <script src="https://aframe.io/releases/0.8.2/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
+    <script src="easyrtc/easyrtc.js"></script>
+    <script src="https://unpkg.com/networked-aframe@^0.6.0/dist/networked-aframe.min.js"></script>
+
+    <script src="https://unpkg.com/aframe-randomizer-components@^3.0.1/dist/aframe-randomizer-components.min.js"></script>
+    <script src="https://unpkg.com/aframe-particle-system-component@1.0.5/dist/aframe-particle-system-component.min.js"></script>
+    <script src="public/js/spawn-in-circle.component.js"></script>
+        <link rel="stylesheet" type="text/css" href="aframecss.css">
+        
+    </head>
+   
+    
+    <body>
+        <!-- Place your code here -->
+        <div class="container">
+    <div class="column" style="display: flex; flex-direction: column; align-items: center;">
+        <div class="col-sm-6 align-self-center text-center">
+            <h3>Join Conference</h3>
+            <button class="btn btn-primary" id="createConference" type="button">Create Conference!</button>
+            <button type="button" id="mute" class="btn btn-danger">Mute</button>
+            <button type="button" id="recording" class="btn btn-danger">Start Recording</button>
+            <button type="button" id="hangup" class="btn btn-danger">Hangup</button>
+        </div>
+        <div class="col-sm-6 align-self-center text-center">
+            <h3>Your ID</h2>
+            <p id="id_profile"></p>
+            <h3>Member list</h2>
+            <p id="member_list"></p>
+            <h3>Recording file</h2>
+            <p id="recording_file"></p>
+        </div>
+    </div>
+</div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <! Clique Client JS SDK -->
+        <script src="./components/clique-api-client-js/client.build.js"></script>
+        <!-- App -->
+        <script src="public/js/app.js" ></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://dev.cliqueapi.com/lib/client.build.js"></script>
+        
+        
+        <!-- AFRAME PART -->
+        <style>
+  #myEmbeddedScene {
+    width:100%;
+    height:600px;
+  }
+</style>
+        
+  <div id= "myEmbeddedScene">
+        <a-scene networked-scene="
+      room: basic;
+      debug: true;
+    ", embedded>
+    <!-- <canvas class="a-canvas a-grab-cursor" data-aframe-canvas="true" width="500" height="500"></canvas>
+      <a-assets> -->
+
+        <img id="grid" src="https://img.gs/bbdkhfbzkk/stretch/https://i.imgur.com/25P1geh.png" crossorigin="anonymous">
+        <img id="sky" src="https://img.gs/bbdkhfbzkk/2048x2048,stretch/http://i.imgur.com/WqlqEkq.jpg" crossorigin="anonymous" />
+
+        <!-- Templates -->
+
+        <!-- Avatar -->
+        <template id="avatar-template">
+          <a-entity class="avatar">
+            <a-sphere class="head"
+              color="#5985ff"
+              scale="0.45 0.5 0.4"
+              random-color
+            ></a-sphere>
+            <a-entity class="face"
+              position="0 0.05 0"
+            >
+              <a-sphere class="eye"
+                color="#efefef"
+                position="0.16 0.1 -0.35"
+                scale="0.12 0.12 0.12"
+              >
+                <a-sphere class="pupil"
+                  color="#000"
+                  position="0 0 -1"
+                  scale="0.2 0.2 0.2"
+                ></a-sphere>
+              </a-sphere>
+              <a-sphere class="eye"
+                color="#efefef"
+                position="-0.16 0.1 -0.35"
+                scale="0.12 0.12 0.12"
+              >
+                <a-sphere class="pupil"
+                  color="#000"
+                  position="0 0 -1"
+                  scale="0.2 0.2 0.2"
+                ></a-sphere>
+              </a-sphere>
+            </a-entity>
+          </a-entity>
+        </template>
+
+        <!-- /Templates -->
+      </a-assets>
+
+      <a-entity id="player" networked="template:#avatar-template;attachTemplateToLocal:false;" camera position="0 1.6 0" spawn-in-circle="radius:3" wasd-controls look-controls>
+        <a-sphere class="head"
+          visible="false"
+          random-color
+        ></a-sphere>
+      </a-entity>
+
+      <a-entity position="0 0 0"
+        geometry="primitive: plane; width: 10000; height: 10000;" rotation="-90 0 0"
+        material="src: #grid; repeat: 10000 10000; transparent: true; metalness:0.6; roughness: 0.4; sphericalEnvMap: #sky;"></a-entity>
+
+      <a-entity light="color: #ccccff; intensity: 1; type: ambient;" visible=""></a-entity>
+      <a-entity light="color: #ffaaff; intensity: 1.5" position="5 5 5"></a-entity>
+
+      <a-sky src="#sky" rotation="0 -90 0"></a-sky>
+      <a-entity id="particles" particle-system="preset: snow"></a-entity>
+    </a-scene>
+        </div>
+
+    <script>
+      // On mobile remove elements that are resource heavy
+      var isMobile = AFRAME.utils.device.isMobile();
+
+      if (isMobile) {
+        var particles = document.getElementById('particles');
+        particles.parentNode.removeChild(particles);
+      }
+      
+      // Define custom schema for syncing avatar color, set by random-color
+      NAF.schemas.add({
+        template: '#avatar-template',
+        components: [
+          'position',
+          'rotation',
+          {
+            selector: '.head',
+            component: 'material',
+            property: 'color'
+          }
+        ]
+      });
+    </script>
+    </body>
+</html>
